@@ -1,0 +1,102 @@
+# Butų ir tiekėjų konfigūracija. JOKIŲ slaptažodžių šiame faile —
+# tik viešai nejautri informacija (adresai, kodai, failų keliai).
+# Realūs slaptažodžiai - žr. secrets.env.example repo šaknyje (sukurkite
+# ŠALIA jo "secrets.env" su tikromis reikšmėmis, jis .gitignore'intas).
+#
+# Šis failas - PAVYZDYS su dviem demonstraciniais butais. Pakeiskite žemiau
+# esančias reikšmes savo tikrais duomenimis (adresai, kodai, el. paštai).
+
+properties:
+  butas1:
+    display_name: "Butas1"
+    subject_name: "Pavyzdinės"   # kilmininko forma laiško temai: "Nuomininkui {subject_name} g. ..."
+    address: "Pavyzdinė g. 1-1, Vilnius"
+    invoices_root: "C:\\Kelias\\iki\\Sąskaitų ištraukimas"
+    folder_pattern: "{year}-{month:02d} Butas1"       # produkcinis aplankas
+    test_folder_pattern: "{year}-{month:02d} Butas1-TEST"  # testavimo aplankas
+    providers:
+      heating_chc:
+        code: "XXXXXXX"           # kodas savitarna.chc.lt (portalas, ne el. paštas)
+      waste_vasa:
+        payer_code: "XXXXXXX"     # Mokėtojo kodas (VASA šiukšlės, jei taikoma, metinė sąskaita)
+    # Text markeriai, pagal kuriuos email_fetcher.py atpažįsta šį butą vv.lt/ignitis.lt
+    # PDF turinyje, kai siuntėjas bendras abiem butams. TIK unikalūs žodžiai —
+    # NE skaičiai/numeriai, nes jie gali atsitiktinai sutapti su kitais PDF
+    # turinio skaičiais (kiekiais, kainomis ir pan.)
+    address_markers: ["Pavyzdinė"]
+    # Jei jūsų bendrijos/administratoriaus sąskaitoje būna KELI "Objektas:"
+    # skyriai (pvz. butas IR parkingo vieta), skaičiuojant sumą nuomininkui
+    # reikia TIK to skyriaus, kurio antraštėje yra šis žymeklis - įrašykite
+    # dalį SAVO buto adreso, kaip jis pasirodo sąskaitoje.
+    own_object_marker: "1-1"
+    waste_fee_filename: "Waste collection fee.txt"  # rankomis vedamas, kas mėn. kopijuojamas iš praeito mėn.
+    language: "lt"                # arba "en", jei nuomininkas kitakalbis
+    tenant_email: "nuomininkas1@example.com"  # arba sąrašas: ["a@example.com", "b@example.com"]
+
+  butas2:
+    display_name: "Butas2"
+    subject_name: "Pavyzdinės2"
+    address: "Pavyzdinė2 g. 2-2, Vilnius"
+    invoices_root: "C:\\Kelias\\iki\\Sąskaitų ištraukimas"
+    folder_pattern: "{year}-{month:02d} Butas2"
+    test_folder_pattern: "{year}-{month:02d} Butas2-TEST"
+    providers:
+      heating_chc:
+        code: "XXXXXXX"           # kodas savitarna.chc.lt (portalas, ne el. paštas)
+      other_adminsta:
+        code: "XXXXXXX"           # UAB Adminsta sąskaitos kodas (el. paštu), jei taikoma
+    address_markers: ["Pavyzdinė2"]
+    waste_fee_filename: "atliekų tvarkymas.txt"
+    language: "lt"
+    tenant_email: "nuomininkas2@example.com"
+
+# Žinomi KITI jūsų turimi objektai/adresai (NE nuomojami butai), kurie kartais
+# pasirodo tame pačiame vv.lt/ignitis.lt sąskaitų sraute (bendras siuntėjas
+# aptarnauja visus jūsų objektus). Jei PDF "sąskaitos detalizacijos" adresas
+# atitinka kurį nors iš šių žymeklių, failas VISIŠKAI IGNORUOJAMAS (nei
+# kopijuojamas, nei dedamas į _NEPATVIRTINTA).
+ignore_markers:
+  - "Jūsų namų adresas"   # pvz. jūsų paties gyvenamasis būstas, jei tas pats tiekėjas jį irgi aptarnauja
+  - "Kitas objektas"      # bet koks kitas jūsų turimas, bet NEnuomojamas objektas
+
+# El. paštu ateinančių sąskaitų tiekėjai - šie integracijų nustatymai (siuntėjo
+# adresai, temos) yra REALŪS Lietuvos komunalinių paslaugų tiekėjų pavyzdžiai,
+# patikrinti su tikra pašto dėžute 2026-10. Jei naudojate tuos pačius tiekėjus,
+# šią dalį keisti nereikia - pakeiskite tik properties: aukščiau.
+email_providers:
+  water_vv:
+    sender_domain: "vv.lt"                    # UAB "Vilniaus vandenys"
+    subject_contains: "mokėjimo pranešimas"
+    property_rule: content          # reikia nuskaityti PDF tekstą, bendras abiem butams
+    annual: false
+  electricity_ignitis:
+    sender_domain: "ignitis.lt"
+    subject_contains: "sąskaita"
+    property_rule: content          # bendras abiem butams
+    annual: false
+  other_adminsta_butas2:
+    sender_address: "saskaitos@adminsta.lt"   # UAB "Adminsta" - pastato administravimas
+    subject_contains: "Sąskaita už"
+    property_rule: "fixed:butas2"
+    annual: false
+  other_manobustas_butas1:
+    sender_domain: "manobustas.lt"            # BonoDomo/"Mano Būstas" platforma
+    subject_contains: "DNSB"                  # pakeiskite į SAVO bendrijos pavadinimo dalį
+    property_rule: "fixed:butas1"
+    annual: false
+  waste_vasa:
+    sender_domain: "vasa.lt"                  # VšĮ "Vilniaus apskrities atliekų tvarkymo..." (jei taikoma jūsų regione)
+    flat_target: "vasa_durnynas"    # NE pagal butą/mėnesį - žr. email_fetcher.py docstring
+    pdf_password_env: "VASA_PDF_PASSWORD_LAST4_PESEL"
+
+# Bendras aplankas (NE per butą/mėnesį) nereguliariai (pvz. metinėms) sąskaitoms,
+# tokioms kaip VASA šiukšlių išvežimo. Radus naują sąskaitą, email_fetcher.py ją
+# čia įdeda IR išsiunčia priminimo laišką naudotojui su PDF priedu.
+vasa_dirname: "VASA-durnynas"
+
+# Testavimo režimo nustatymai - kol nesate tikri, kad viskas veikia teisingai,
+# laiškai siunčiami TIK jums, ne tikriems nuomininkams.
+test_mode:
+  enabled: true
+  recipient: "jusu.adresas@gmail.com"
+  subject_template: "Nuomininkui {subject_name} g. - sąskaitos už {month_name} TEST"

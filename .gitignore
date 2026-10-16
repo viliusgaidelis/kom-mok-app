@@ -1,0 +1,14 @@
+# Secrets — never commit real credentials
+.env
+secrets.env
+config/secrets.yaml
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Local runtime output
+logs/*.log
+downloads/
